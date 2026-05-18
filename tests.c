@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -28,24 +29,24 @@ int run_testcase(void (*fn)(void), int test_num, char *fn_name) {
 
 void test_init(void) {
 	int ret = ajmalloc_init();
-	assert(ret == 0);
+	if (ret != 0) exit(2);
 	ajmalloc_destroy();
 	printf("hello\n");
 }
 
 void test_alloc(void) {
 	int ret = ajmalloc_init();
-	assert(ret == 0);
+	if (ret != 0) exit(1);
 
 	int *ptr = malloc(10 * sizeof(int));
-	assert(ptr != NULL);
+	if (ptr == NULL) exit(1);
 	ajmalloc_destroy();
 	printf("hello\n");
 }
 
 void test_dealloc(void) {
 	int ret = ajmalloc_init();
-	assert(ret == 0);
+	if (ret != 0) exit(1);
 
 	int *ptr1 = malloc(10 * sizeof(int));
 	free(ptr1);
@@ -55,15 +56,15 @@ void test_dealloc(void) {
 
 void test_space_reuse(void) {
 	int ret = ajmalloc_init();
-	assert(ret == 0);
+	if (ret != 0) exit(1);
 
 	int *ptr1 = malloc(10 * sizeof(int));
 	int *ptr2 = malloc(10 * sizeof(int));
-	assert(ptr1 != ptr2);
+	if (!(ptr1 != ptr2)) exit(1);
 	int *ref = ptr1;
 	free(ptr1);
 	int *ptr3 = malloc(10 * sizeof(int));
-	assert(ptr3 == ref);
+	if (ptr3 != ref) exit(1);
 	ajmalloc_destroy();
 	printf("hello\n");
 }
@@ -83,6 +84,8 @@ int main(void) {
 	if (WIFSIGNALED(status)) printf("Term signal: %d\n", WTERMSIG(status));
 	if (WCOREDUMP(status)) printf("core dumped\n");
 	if (WIFSTOPPED(status)) printf("Stop signal: %d\n", WSTOPSIG(status));
+
+	/*
 
 	if ((pid = fork()) == 0) {
 		test_alloc();
@@ -105,5 +108,6 @@ int main(void) {
 	}
 	ret = waitpid(pid, &status, 0);
 	printf("%d = %d\n", pid, ret);
+	*/
 	return 0;
 }

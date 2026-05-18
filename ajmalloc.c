@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 
 static void *memory = NULL;
 static size_t length = 0;
@@ -15,6 +16,7 @@ typedef struct header header;
 int ajmalloc_init(void) {
 	length = 2000 * sizeof(int);
 	memory = malloc(length);
+	printf("%d, %p", length, memory);
 	if (memory == NULL) {
 		return 1;
 	}
