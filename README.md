@@ -41,3 +41,12 @@ memory pointer, I realized that the malloc in ajmalloc_init was
 using the overriden malloc (i.e. my malloc) to do the memory
 allocation for memory, which required initialization using
 ajmalloc_init!
+
+21-05-26
+- Changed malloc and free to mmap and munmap with flags that
+I thought were appropriate for now.
+- Realized there was one logic issue in checking if something
+can be allocated to a free region (used h->length < size
+instead of size < h->length)
+- There seems to be another issue with how the header is being
+calculated and recalculated, so will check that later.

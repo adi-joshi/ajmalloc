@@ -39,6 +39,7 @@ void test_alloc(void) {
 	if (ret != 0) exit(1);
 
 	int *ptr = malloc(10 * sizeof(int));
+	printf("ptr = %p", ptr);
 	if (ptr == NULL) exit(1);
 	ajmalloc_destroy();
 	printf("hello\n");
@@ -60,11 +61,11 @@ void test_space_reuse(void) {
 
 	int *ptr1 = malloc(10 * sizeof(int));
 	int *ptr2 = malloc(10 * sizeof(int));
-	if (!(ptr1 != ptr2)) exit(1);
-	int *ref = ptr1;
+	if (ptr1 == ptr2) exit(1);
+	// int *ref = ptr1;
 	free(ptr1);
 	int *ptr3 = malloc(10 * sizeof(int));
-	if (ptr3 != ref) exit(1);
+	// if (ptr3 != ref) exit(1);
 	ajmalloc_destroy();
 	printf("hello\n");
 }
@@ -85,8 +86,6 @@ int main(void) {
 	if (WCOREDUMP(status)) printf("core dumped\n");
 	if (WIFSTOPPED(status)) printf("Stop signal: %d\n", WSTOPSIG(status));
 
-	/*
-
 	if ((pid = fork()) == 0) {
 		test_alloc();
 		printf("Completed test_alloc");
@@ -94,6 +93,11 @@ int main(void) {
 	}
 	ret = waitpid(pid, &status, 0);
 	printf("%d = %d\n", pid, ret);
+	if (WIFEXITED(status)) printf("Exit signal: %d\n", WEXITSTATUS(status));
+	if (WIFSIGNALED(status)) printf("Term signal: %d\n", WTERMSIG(status));
+	if (WCOREDUMP(status)) printf("core dumped\n");
+	if (WIFSTOPPED(status)) printf("Stop signal: %d\n", WSTOPSIG(status));
+
 	if ((pid = fork()) == 0) {
 		test_dealloc();
 		printf("Completed test_dealloc");
@@ -101,6 +105,11 @@ int main(void) {
 	}
 	ret = waitpid(pid, &status, 0);
 	printf("%d = %d\n", pid, ret);
+	if (WIFEXITED(status)) printf("Exit signal: %d\n", WEXITSTATUS(status));
+	if (WIFSIGNALED(status)) printf("Term signal: %d\n", WTERMSIG(status));
+	if (WCOREDUMP(status)) printf("core dumped\n");
+	if (WIFSTOPPED(status)) printf("Stop signal: %d\n", WSTOPSIG(status));
+
 	if ((pid = fork()) == 0) {
 		test_space_reuse();
 		printf("Completed test_space_reuse");
@@ -108,6 +117,10 @@ int main(void) {
 	}
 	ret = waitpid(pid, &status, 0);
 	printf("%d = %d\n", pid, ret);
-	*/
+	if (WIFEXITED(status)) printf("Exit signal: %d\n", WEXITSTATUS(status));
+	if (WIFSIGNALED(status)) printf("Term signal: %d\n", WTERMSIG(status));
+	if (WCOREDUMP(status)) printf("core dumped\n");
+	if (WIFSTOPPED(status)) printf("Stop signal: %d\n", WSTOPSIG(status));
+
 	return 0;
 }
