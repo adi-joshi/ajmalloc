@@ -48,5 +48,18 @@ I thought were appropriate for now.
 - Realized there was one logic issue in checking if something
 can be allocated to a free region (used h->length < size
 instead of size < h->length)
+
+22-05-26
 - There seems to be another issue with how the header is being
 calculated and recalculated, so will check that later.
+- Realized that there is an issue with how I'm doing the
+pointer arithmetic for header calculation. Fixed by first
+casting to uintptr_t, and then doing addition subtraction
+using sizeof.
+
+23-05-26
+- Also a logic error in malloc where it wouldn't
+allocate if the requested size had the exact same size
+as the block size, so changed that as well
+- For some reason, test_init was coredumping before,
+but is not now after the fixes

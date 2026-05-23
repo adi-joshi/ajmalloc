@@ -4,7 +4,7 @@ build: ajmalloc.o
 	$(CC) $(CFLAGS) ajmalloc.o --shared -o libajmalloc.so
 
 debug:
-	$(CC) $(CFLAGS) -g ajmalloc.c --shared -o libajmalloc.so
+	$(CC) $(CFLAGS) -g -DDEBUG=1 ajmalloc.c --shared -o libajmalloc.so
 test: build
 	gcc -L. -lajmalloc tests.c -o tests
 

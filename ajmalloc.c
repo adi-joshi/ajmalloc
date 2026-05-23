@@ -1,6 +1,11 @@
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/mman.h>
+
+#ifndef DEBUG
+#define DEBUG 0
+#endif
 
 static void *memory = NULL;
 static size_t length = 0;
@@ -14,10 +19,11 @@ static struct header {
 
 typedef struct header header;
 
+static const int HSIZE_PA = sizeof(struct header) / sizeof((void *) (0x0));
+
 int ajmalloc_init(void) {
 	length = 2000 * sizeof(int);
 	memory = mmap(memory, length, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-	printf("In ajmalloc: length=%d, memory=%p\n", length, memory);
 	if (memory == NULL) {
 		return 1;
 	}
@@ -35,11 +41,10 @@ void *malloc(size_t size) {
 	header *h = memory;
 	void *ptr = NULL;
 	while(h) {
-		printf("(malloc) ptr=%p, empty=%d, length=%d\n", h + sizeof(struct header), h->empty, h->length);
-		if (h->empty && size < h->length) {
-			ptr = h + sizeof(struct header);
+		if (h->empty && size <= h->length) {
+			ptr = (void *) ( (uintptr_t)h + sizeof(struct header));
 
-			header *next_h = h + sizeof(struct header) + size;
+			header *next_h = (void *) ( (uintptr_t)h + sizeof(struct header) + size);
 			next_h->prev = h;
 			next_h->next = h->next;
 			next_h->length = h->length - size - sizeof(struct header);
@@ -53,13 +58,19 @@ void *malloc(size_t size) {
 
 		h = h->next;
 	}
+#if DEBUG == 1
 	printf("(malloc) malloc_ptr=%p\n", ptr);
+#endif
 	return ptr;
 }
 
 void free(void *ptr) {
 	header *h = ptr - sizeof(struct header); // only this can throw segfault, and it shouldn't
 	h->empty = true;
+
+#if DEBUG == 1
+	printf("(free) ptr=%p, header=%p\n", ptr, h);
+#endif
 
 	// coalescing
 	header *nh = h->next;
@@ -73,7 +84,6 @@ void free(void *ptr) {
 		ph->next = h->next;
 		ph->length += h->length + sizeof(struct header);
 	}
-	printf("(free) ptr=%p, empty=%d, length=%d, prev=%p, next=%p\n", ptr, h->empty, h->length, h->prev, h->next);
 	return;
 }
 
