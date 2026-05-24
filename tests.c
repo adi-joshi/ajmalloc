@@ -70,6 +70,7 @@ void test_space_exhaust(void) {
 	if (ret != 0) exit(1);
 
 	int *arr[1000];
+	int *arr2[1000];
 
 	for (int i = 0; i < 1000; i++) {
 		int *ptr = malloc(1000 * sizeof(int));
@@ -84,6 +85,7 @@ void test_space_exhaust(void) {
 	int *end = arr[999];
 
 	for (int i = 0; i < 1000; i++) {
+		arr2[i] = arr[i];
 		free(arr[i]);
 	}
 
@@ -91,8 +93,13 @@ void test_space_exhaust(void) {
 
 	printf("ptr=%p, start=%p, end=%p\n", ptr, start, end);
 
-	if (ptr != start || ptr != end) exit(1);
-	return;
+	//if (ptr != start || ptr != end) exit(1);
+	for (int i = 0; i < 1000; i++) {
+		if (ptr == arr2[i]) {
+			return;
+		}
+	}
+	exit(1);
 }
 
 int main(void) {

@@ -46,7 +46,9 @@ void *malloc(size_t size) {
 	void *ptr = NULL;
 	header *prev = NULL;
 	while(h) {
+#if DEBUG == 1
 		printf("(malloc) memory=%p, h=%p, empty=%d, length=%d\n", memory, h, h->empty, h->length);
+#endif
 		if (h->empty && size <= h->length) {
 			ptr = (void *) ( (uintptr_t)h + sizeof(struct header));
 
@@ -69,9 +71,13 @@ void *malloc(size_t size) {
 	if (ptr == NULL) { // no space in current list
 		int additional = max(2 * size, length) + sizeof(struct header);
 		int new_length = length + additional;
+#if DEBUG == 1
 		printf("(malloc) old mem start=%p\n", memory);
+#endif
 		void * new_memory = mmap(memory, new_length, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+#if DEBUG == 1
 		printf("(malloc) new mem start=%p\n", new_memory);
+#endif
 		if (new_memory == MAP_FAILED) return NULL;
 
 		header *h = NULL;
@@ -117,7 +123,9 @@ void *malloc(size_t size) {
 		h->empty = false;
 		h->length = size;
 		h->next = next_h;
+#if DEBUG == 1
 		printf("(malloc) malloc_ptr=%p, memory=%p, h=%p, empty=%d, length=%d\n", ptr, memory, h, h->empty, h->length);
+#endif
 		length = new_length;
 	}
 
@@ -139,15 +147,23 @@ void free(void *ptr) {
 	header *nh = h->next;
 	if (nh && nh->empty) {
 		h->next = nh->next;
+		header *nnh = nh->next;
+		if (nnh) nnh->prev = h;
 		h->length += nh->length + sizeof(struct header);
+#if DEBUG == 1
 		printf("(free) ptr=%p, header=%p, size=%d, empty=%d, nh=%p, nhsize=%d, nhempty=%d\n", ptr, h, h->length, h->empty, nh, nh->length, nh->empty);
+#endif
 	}
 
 	header *ph = h->prev;
-	if (h->prev && ph->empty) {
+	if (ph && ph->empty) {
 		ph->next = h->next;
+		header *nh = ph->next;
+		if (nh) nh->prev = ph;
 		ph->length += h->length + sizeof(struct header);
-		printf("(free) ptr=%p, header=%p, size=%d, empty=%d\n", ptr, ph, ph->length, ph->empty);
+#if DEBUG == 1
+		printf("(free) ptr=%p, header=%p, size=%d, empty=%d, ph=%p, phsize=%d, phempty=%d, phnext=%p\n", ptr, h, h->length, h->empty, ph, ph->length, ph->empty, ph->next);
+#endif
 	}
 	return;
 }

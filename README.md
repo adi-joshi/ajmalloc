@@ -69,4 +69,12 @@ but is not now after the fixes
 - Realized that mmap can return an address lower than
 the one specified (i.e. the heap grows downwards), so
 added logic to handle that.
-- 
+- The reason the size of the next or previous header
+wasn't increasing during coalescing was due to not
+reattaching the pointers properly during coalescing.
+This is now working, and size is incrementally increasing.
+- The failing test was kind of wrong as the start and
+end malloced ptrs might not be the start and end of the malloc
+memory segment, so changed that check to be the new malloced
+pointer is the same as any pointer that was previously allocated
+(this will always work due to how we are allocating memory in malloc)
