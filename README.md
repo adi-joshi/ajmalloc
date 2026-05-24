@@ -63,3 +63,10 @@ allocate if the requested size had the exact same size
 as the block size, so changed that as well
 - For some reason, test_init was coredumping before,
 but is not now after the fixes
+- Fixed a few more logic issues
+
+24-05-26
+- Realized that mmap can return an address lower than
+the one specified (i.e. the heap grows downwards), so
+added logic to handle that.
+- 

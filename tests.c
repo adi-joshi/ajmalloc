@@ -65,6 +65,36 @@ void test_space_reuse(void) {
 	ajmalloc_destroy();
 }
 
+void test_space_exhaust(void) {
+	int ret = ajmalloc_init();
+	if (ret != 0) exit(1);
+
+	int *arr[1000];
+
+	for (int i = 0; i < 1000; i++) {
+		int *ptr = malloc(1000 * sizeof(int));
+		if (ptr == NULL) {
+			printf("Test failed");
+			exit(1);
+		}
+		arr[i] = ptr;
+	}
+
+	int *start = arr[0];
+	int *end = arr[999];
+
+	for (int i = 0; i < 1000; i++) {
+		free(arr[i]);
+	}
+
+	int *ptr = malloc(1000 * sizeof(int));
+
+	printf("ptr=%p, start=%p, end=%p\n", ptr, start, end);
+
+	if (ptr != start || ptr != end) exit(1);
+	return;
+}
+
 int main(void) {
 	int pid;
 	if ((pid = fork()) == 0) {
@@ -108,6 +138,18 @@ int main(void) {
 	if ((pid = fork()) == 0) {
 		test_space_reuse();
 		printf("Completed test_space_reuse\n");
+		return 0;
+	}
+	printf("PID=%d\n", pid);
+	ret = waitpid(pid, &status, 0);
+	if (WIFEXITED(status)) printf("Exit signal: %d\n", WEXITSTATUS(status));
+	if (WIFSIGNALED(status)) printf("Term signal: %d\n", WTERMSIG(status));
+	if (WCOREDUMP(status)) printf("core dumped\n");
+	if (WIFSTOPPED(status)) printf("Stop signal: %d\n", WSTOPSIG(status));
+
+	if ((pid = fork()) == 0) {
+		test_space_exhaust();
+		printf("Completed test_space_exhaust\n");
 		return 0;
 	}
 	printf("PID=%d\n", pid);
