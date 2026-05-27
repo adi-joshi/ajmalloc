@@ -17,7 +17,12 @@ debug_test: debug
 run_debug_test: debug_test
 	LD_LIBRARY_PATH=. ./tests
 
+perf: build
+	gcc perf.c -o perf
+	./perf
+	./perf ajmalloc
+
 .PHONY: clean
 
 clean:
-	rm -f ajmalloc.o libajmalloc.so tests.o tests
+	rm -f ajmalloc.o libajmalloc.so tests.o tests perf.o perf
