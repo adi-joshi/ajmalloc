@@ -60,14 +60,129 @@ int alloc_dealloc_random(void) {
 
 	size_t allocs = 100000;
 	int *arr[allocs];
+
+	srand(0);
+	// 1, 2, ..., 100000
+	// at each alloc, random chance to free an allocated ptr.
+	// so at 1, 2, ..., n, free a random ptr that is allocated (and not freed)
+	// maybe best is to create a int *free_ptrs[2 * allocs], int *shuffled[allocs]
+	// then put a shuffled version of [1, 2, ..., 1000] into shuffled, then
+	// roll the dice. If at position i, the dice is 0, then free_ptrs[i] = -1.
+	// Otherwise free_ptrs[i] = shuffled[next_pos].
+	// Then, rearrange free_ptrs, so that at position i, if free_ptrs[i] > i,
+	// then replace free_ptrs[i] with the next non -1 occurrence in free_ptrs
+	
+	int free_ptrs[2 * allocs];
+
+	for (int i = 0; i < 2 * allocs; i++) {
+		free_ptrs[i] = -1;
+	}
+
+	for (int i = 0; i < allocs; i++) {
+		int x = i + (rand() % (allocs - i));
+		for (int j = x; j < 2 * allocs; j++) {
+			if (free_ptrs[j] == -1) {
+				free_ptrs[j] = i;
+				break;
+			}
+		}
+	}
+	
+	/*
+	int shuffled[allocs];
+	for (int i = 0; i < allocs; i++) {
+		shuffled[i] = i;
+	}
+
+	// now shuffle
+	
+	for (int i = 0; i < allocs; i++) {
+		int x = rand() % allocs; // biased, but should be ok
+		int temp = shuffled[i];
+		shuffled[i] = shuffled[x];
+		shuffled[x] = temp;
+	}
+
+	// now add to free_ptrs (if rand), else -1
+
+	int shuffled_idx = 0;
+	for (int i = 0; i < allocs; i++) {
+		if (rand() >= RAND_MAX / 2) {
+			free_ptrs[i] = shuffled[shuffled_idx];
+			shuffled_idx++;
+		} else {
+			free_ptrs[i] = -1;
+		}
+	}
+
+	// add remaining not added previously
+	
+	for (int i = 0; i < allocs - shuffled_idx; i++) {
+		free_ptrs[allocs + i] = shuffled[shuffled_idx + i];
+	}
+
+	// -1 for the end
+	for (int i = 2 * allocs - shuffled_idx; i < 2 * allocs; i++) {
+		free_ptrs[i] = -1;
+	}
+
+	for (int i = 0; i < 2 * allocs; i++) {
+		if (free_ptrs[i] == -1) continue;
+
+		if (free_ptrs[i] > i) {
+			for (int j = i; j < 2 * allocs; j++) {
+				if (free_ptrs[j] == -1) continue;
+
+				if (free_ptrs[j] <= i) {
+					int temp = free_ptrs[i];
+					free_ptrs[i] = free_ptrs[j];
+					free_ptrs[j] = temp;
+				}
+			}
+		}
+	}
+	*/
+
+	// now free_ptrs should contain the sequence of frees
+	/*
+	printf("[");
+	for (int i = 0; i < 2 * allocs; i++) {
+		printf("%d, ", free_ptrs[i]);
+	}
+	printf("]\n");
+	*/
+
+	// check for duplicates or inconsistencies
+	int check[allocs];
+	for (int i = 0; i < allocs; i++) {
+		check[i] = -1;
+	}
+
+	for (int i = 0; i < 2 * allocs; i++) {
+		if (free_ptrs[i] == -1) {
+			continue;
+		}
+
+		if (check[free_ptrs[i]] != -1) {
+			printf("Not consistent at index %d\n", i);
+			exit(1);
+		}
+		check[free_ptrs[i]] = free_ptrs[i];
+	}
+
 	// refers https://stackoverflow.com/a/10192994
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 	for (int i = 0; i < allocs; i++) {
 		arr[i] = malloc(100 * sizeof(int));
+		if (free_ptrs[i] != -1) {
+			free(arr[free_ptrs[i]]);
+		}
 	}
 
-	for (int i = 0; i < allocs; i++) {
-		free(arr[i]);
+	for (int i = allocs; i < 2 * allocs; i++) {
+		if (free_ptrs[i] != -1) {
+			free(arr[free_ptrs[i]]);
+		}
 	}
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &stop);
@@ -133,6 +248,22 @@ int main(int argc, char **argv) {
 			}
 		}
 		printf("[alloc_dealloc_large] = %d.%3d\n", val / 1000, val % 1000);
+		exit(0);
+	}
+	waitpid(pid, &status, 0);
+
+	if ((pid = fork()) == 0) {
+		uint64_t val = 0;
+		for (int i = 0; i < 10; i++) {
+			if (init_fn) {
+				init_fn();
+			}
+			val += alloc_dealloc_random();
+			if (destroy_fn) {
+				destroy_fn();
+			}
+		}
+		printf("[alloc_dealloc_random] = %d.%3d\n", val / 1000, val % 1000);
 		exit(0);
 	}
 	waitpid(pid, &status, 0);

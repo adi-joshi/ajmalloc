@@ -78,3 +78,16 @@ end malloced ptrs might not be the start and end of the malloc
 memory segment, so changed that check to be the new malloced
 pointer is the same as any pointer that was previously allocated
 (this will always work due to how we are allocating memory in malloc)
+
+27-05-26
+- Tried to download and run mimalloc-bench, but wasn't able to due
+to several reasons (C++ version issues, incomplete downloads,
+downloading a lot of packages).
+- I thought it would be a good exercise to write the performance
+testing myself, so I wrote the performance testing script.
+- Wrote the mass allocation and deallocation scripts. C malloc
+was performing around 4x faster than ajmalloc.
+
+28-05-26
+- Wrote a random allocation and deallocation performance test in the
+script. ajmalloc performs on average 1.3x better than C malloc.
