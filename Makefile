@@ -12,7 +12,7 @@ run_test: test
 	LD_LIBRARY_PATH=. ./tests
 
 debug_test: debug
-	gcc -L. -lajmalloc tests.c -o tests
+	gcc -L. -lajmalloc tests.c -g -DDEBUG=1 -o tests
 
 run_debug_test: debug_test
 	LD_LIBRARY_PATH=. ./tests

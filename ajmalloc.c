@@ -19,22 +19,27 @@ static struct header {
 
 typedef struct header header;
 
-static const int HSIZE_PA = sizeof(struct header) / sizeof((void *) (0x0));
-
 static int max(int a, int b) {
 	return a > b ? a : b;
 }
 
 int ajmalloc_init(void) {
 	length = 2000 * sizeof(int);
-	memory = mmap(memory, length, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+	memory = mmap(
+		memory,
+		length,
+		PROT_READ | PROT_WRITE | PROT_EXEC,
+		MAP_SHARED | MAP_ANONYMOUS,
+		-1,
+		0
+	);
 	if (memory == MAP_FAILED) {
 		return 1;
 	}
 	header *h = memory;
 	h->next = NULL;
 	h->prev = NULL;
-	h->length = length - sizeof(struct header);
+	h->length = length - sizeof(header);
 	h->empty = true;
 	return 0;
 }
@@ -50,12 +55,12 @@ void *malloc(size_t size) {
 		printf("(malloc) memory=%p, h=%p, empty=%d, length=%d\n", memory, h, h->empty, h->length);
 #endif
 		if (h->empty && size <= h->length) {
-			ptr = (void *) ( (uintptr_t)h + sizeof(struct header));
+			ptr = (void *) ( (uintptr_t)h + sizeof(header));
 
-			header *next_h = (void *) ( (uintptr_t)h + sizeof(struct header) + size);
+			header *next_h = (void *) ( (uintptr_t)h + sizeof(header) + size);
 			next_h->prev = h;
 			next_h->next = h->next;
-			next_h->length = h->length - size - sizeof(struct header);
+			next_h->length = h->length - size - sizeof(header);
 			next_h->empty = true;
 
 			h->empty = false;
@@ -69,15 +74,15 @@ void *malloc(size_t size) {
 	}
 
 	if (ptr == NULL) { // no space in current list
-		int additional = max(2 * size, length) + sizeof(struct header);
+		int additional = max(2 * size, length) + sizeof(header);
 		int new_length = length + additional;
+		void * new_memory = mmap(memory, new_length, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+
 #if DEBUG == 1
 		printf("(malloc) old mem start=%p\n", memory);
-#endif
-		void * new_memory = mmap(memory, new_length, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-#if DEBUG == 1
 		printf("(malloc) new mem start=%p\n", new_memory);
 #endif
+
 		if (new_memory == MAP_FAILED) return NULL;
 
 		header *h = NULL;
@@ -87,12 +92,12 @@ void *malloc(size_t size) {
 			header *first_h = memory;
 			if (first_h->empty) {
 				h->next = first_h->next;
-				h->length = first_h->length + sizeof(struct header) + additional;
+				h->length = first_h->length + sizeof(header) + additional;
 				h->prev = NULL;
 				h->empty = true;
 			} else {
 				h->next = first_h;
-				h->length = additional - sizeof(struct header);
+				h->length = additional - sizeof(header);
 				h->prev = NULL;
 				h->empty = true;
 			}
@@ -104,7 +109,7 @@ void *malloc(size_t size) {
 			} else {
 				prev->next = (void *) ( (uintptr_t) memory + length);
 				header *next = prev->next;
-				next->length = new_length - sizeof(struct header);
+				next->length = new_length - sizeof(header);
 				next->empty = true;
 				next->prev = prev;
 				h = next;
@@ -112,12 +117,12 @@ void *malloc(size_t size) {
 		}
 
 		memory = new_memory;
-		ptr = (void *) ( (uintptr_t)h + sizeof(struct header));
+		ptr = (void *) ( (uintptr_t)h + sizeof(header));
 
-		header *next_h = (void *) ( (uintptr_t)h + sizeof(struct header) + size);
+		header *next_h = (void *) ( (uintptr_t)h + sizeof(header) + size);
 		next_h->prev = h;
 		next_h->next = h->next;
-		next_h->length = h->length - size - sizeof(struct header);
+		next_h->length = h->length - size - sizeof(header);
 		next_h->empty = true;
 
 		h->empty = false;
@@ -136,7 +141,7 @@ void *malloc(size_t size) {
 }
 
 void free(void *ptr) {
-	header *h = ptr - sizeof(struct header); // only this can throw segfault, and it shouldn't
+	header *h = ptr - sizeof(header); // only this can throw segfault, and it shouldn't
 	h->empty = true;
 
 #if DEBUG == 1
@@ -149,7 +154,7 @@ void free(void *ptr) {
 		h->next = nh->next;
 		header *nnh = nh->next;
 		if (nnh) nnh->prev = h;
-		h->length += nh->length + sizeof(struct header);
+		h->length += nh->length + sizeof(header);
 #if DEBUG == 1
 		printf("(free) ptr=%p, header=%p, size=%d, empty=%d, nh=%p, nhsize=%d, nhempty=%d\n", ptr, h, h->length, h->empty, nh, nh->length, nh->empty);
 #endif
@@ -160,7 +165,7 @@ void free(void *ptr) {
 		ph->next = h->next;
 		header *nh = ph->next;
 		if (nh) nh->prev = ph;
-		ph->length += h->length + sizeof(struct header);
+		ph->length += h->length + sizeof(header);
 #if DEBUG == 1
 		printf("(free) ptr=%p, header=%p, size=%d, empty=%d, ph=%p, phsize=%d, phempty=%d, phnext=%p\n", ptr, h, h->length, h->empty, ph, ph->length, ph->empty, ph->next);
 #endif
@@ -171,4 +176,5 @@ void free(void *ptr) {
 void ajmalloc_destroy(void) {
 	munmap(memory, length);
 	length = 0;
+	return;
 }

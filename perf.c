@@ -79,13 +79,19 @@ int alloc_dealloc_random(void) {
 	}
 
 	for (int i = 0; i < allocs; i++) {
-		int x = i + (rand() % (allocs - i));
+		// clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+		int x = i + (rand() % (2 * allocs - i));
 		for (int j = x; j < 2 * allocs; j++) {
 			if (free_ptrs[j] == -1) {
 				free_ptrs[j] = i;
 				break;
 			}
 		}
+		/*
+		clock_gettime(CLOCK_MONOTONIC_RAW, &stop);
+		uint64_t timeus_setup = (stop.tv_sec - start.tv_sec) * 1000000 + (stop.tv_nsec - start.tv_nsec) / 1000;
+		printf("[alloc_dealloc_random setup %d -> %d] = %d.%3d\n", i, x, timeus_setup / 1000, timeus_setup % 1000);
+		*/
 	}
 	
 	/*
@@ -193,7 +199,6 @@ int alloc_dealloc_random(void) {
 }
 
 int main(int argc, char **argv) {
-	printf("argc = %d\n", argc);
 	if (argc > 2) {
 		exit(1);
 	}
@@ -216,6 +221,9 @@ int main(int argc, char **argv) {
 			void (*free)(void *) = dlsym(handle, "free");
 			void (*destroy_fn)(void) = dlsym(handle, "ajmalloc_destroy");
 		}
+		printf("Malloc impl = ajmalloc\n");
+	} else {
+		printf("Malloc impl = C malloc\n");
 	}
 
 	int pid;
@@ -230,7 +238,7 @@ int main(int argc, char **argv) {
 				destroy_fn();
 			}
 		}
-		printf("[alloc_large] = %d.%3d\n", val / 1000, val % 1000);
+		printf("[alloc_large] = %d.%03d\n", val / 1000, val % 1000);
 		exit(0);
 	}
 	int status;
@@ -247,7 +255,7 @@ int main(int argc, char **argv) {
 				destroy_fn();
 			}
 		}
-		printf("[alloc_dealloc_large] = %d.%3d\n", val / 1000, val % 1000);
+		printf("[alloc_dealloc_large] = %d.%03d\n", val / 1000, val % 1000);
 		exit(0);
 	}
 	waitpid(pid, &status, 0);
@@ -263,7 +271,7 @@ int main(int argc, char **argv) {
 				destroy_fn();
 			}
 		}
-		printf("[alloc_dealloc_random] = %d.%3d\n", val / 1000, val % 1000);
+		printf("[alloc_dealloc_random] = %d.%03d\n", val / 1000, val % 1000);
 		exit(0);
 	}
 	waitpid(pid, &status, 0);

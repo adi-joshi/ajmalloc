@@ -106,7 +106,8 @@ int main(void) {
 	int pid;
 	if ((pid = fork()) == 0) {
 		test_init();
-		printf("Completed test_init\n");
+		write(STDOUT_FILENO, "Completed test_init\n", 21);
+		// printf("Completed test_init\n");
 		return 0;
 	}
 	int status;

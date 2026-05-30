@@ -1,21 +1,20 @@
-## AJMalloc
+# AJMalloc
 
 A memory allocator implementation.
 
-### Design Decisions
+## Performance
 
-### Observations
+As of 30 May 2026, the performance is as follows.
+The performance tests are written by me in perf.c
 
-**Observation**
-- For some reason, using assert calls a libc function that calls free.
-As ajmalloc isn't initialized, it causes a null pointer deference in
-free, causing a segfault.
+| Test name | C malloc perf (ms) | ajmalloc perf (ms) |
+| --- | --- | --- |
+| alloc_large | 581.363 | 2018.591 |
+| alloc_dealloc_large | 1139.542 | 3838.677 |
+| alloc_dealloc_random | 357.108 | 358.191 |
 
-**Resolution**
-- Don't use asserts, just use if statements and exit to fail
-loudly on errors.
 
-### Adventure
+## Decisions and Adventure
 
 17-05-26
 - Wrote initial malloc implementation. v1 was quite easy to write.
