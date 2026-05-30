@@ -90,3 +90,6 @@ was performing around 4x faster than ajmalloc.
 28-05-26
 - Wrote a random allocation and deallocation performance test in the
 script. ajmalloc performs on average 1.3x better than C malloc.
+
+30-05-26
+- Cleanup repository and push to Github
